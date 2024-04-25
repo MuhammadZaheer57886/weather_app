@@ -1,44 +1,74 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:weather_app/models/weather_model.dart';
-import 'package:weather_app/screens/search_screen.dart';
+import 'package:weather_app/services/location_service.dart';
 import 'package:weather_app/utils/connectivity_util.dart';
-import 'package:weather_app/widgets/weather_card.dart'; 
+import 'package:weather_app/widgets/custom_searchfield.dart';
+import 'package:weather_app/widgets/weather_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, });
+  const HomeScreen({
+    super.key,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool _isSearching = false;
+
   bool _isConnected = true;
+  final TextEditingController _searchController = TextEditingController();
+  final LocationService _locationService = LocationService();
+  String _location = 'Loading...';
   @override
   void initState() {
     super.initState();
-    _checkConnectivity(); // Check connectivity when the screen is first displayed
+    _checkConnectivity();
+    _getLocation();
   }
-Future<void> _checkConnectivity() async {
-  bool isConnected = await ConnectivityUtil.isInternetAvailable();
-  setState(() {
-    _isConnected = isConnected;
-  });
-}
 
+  Future<void> _getLocation() async {
+    try {
+      Position position = await _locationService.getCurrentLocation();
+      String cityName = await _locationService.getCityNameFromLatLng(position);
+      setState(() {
+        _location = cityName;
+      });
+    } catch (e) {
+      log("Error getting location: $e");
+      setState(() {
+        _location = 'Unable to get location';
+      });
+    }
+  }
+
+  Future<void> _checkConnectivity() async {
+    bool isConnected = await ConnectivityUtil.isInternetAvailable();
+    setState(() {
+      _isConnected = isConnected;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weather App'),
+        title: _isSearching
+            ? CustomSearchTextField(
+                controller: _searchController,
+              )
+            : const Text('Weather App'),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SearchScreen()),
-              );
+              setState(() {
+                _isSearching = !_isSearching;
+              });
             },
           ),
         ],
@@ -64,23 +94,37 @@ Future<void> _checkConnectivity() async {
                   ),
                 ],
               ),
-              child: WeatherCard(
-                weather: _getWeather(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Your current location:\n$_location'),
+                  WeatherCard(
+                    location: _location,
+                    weather: _getWeather(),
+                  ),
+                ],
               ),
             )
-          : Center(
-              child: Text(
-                'Please check your internet connection.',
-                style: TextStyle(fontSize: 18),
-              ),
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  'Please check your internet connection.',
+                  style: TextStyle(fontSize: 18),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _checkConnectivity,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh'),
+                ),
+              ],
             ),
     );
   }
 
-  // Dummy weather data (replace this with real data)
   Weather _getWeather() {
     return Weather(
-      location: 'New York',
       temperature: 25,
       humidity: 50,
       windSpeed: 10,

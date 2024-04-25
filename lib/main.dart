@@ -1,4 +1,3 @@
-
 import 'package:weather_app/app_exports.dart';
 import 'package:weather_app/splash_screen.dart';
 
@@ -11,8 +10,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  const MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(), );
+      home: SplashScreen(),
+    );
   }
 }

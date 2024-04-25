@@ -3,11 +3,13 @@ import 'package:weather_app/models/weather_model.dart';
 
 class WeatherCard extends StatelessWidget {
   final Weather weather;
+  final String location;
 
   const WeatherCard({
     required this.weather,
-    Key? key,
-  }) : super(key: key);
+    required this.location,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,7 @@ class WeatherCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              weather.location,
+              '$location,',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
